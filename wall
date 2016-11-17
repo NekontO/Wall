@@ -1,0 +1,60 @@
+//header
+#include <Windows.h>
+
+//Definition of the address we are going to modify
+//NOTE: this address is for CFPH
+#define WallArray 0x467F74
+
+//boolean to make it true or simply turn it "ON", you can also use "int Walls = 1;" 1 = true and 0 = false
+bool Walls = true;
+
+//boolean to make it true or simply turn it "ON", you can also use "int SeeGhost = 1;" 1 = true and 0 = false
+bool SeeGhost = true;
+
+//Start our Hack
+void StartHack()
+{
+    DWORD Wall = *(DWORD*)(WallArray + 0xA); // we are pointing where we are going to modify
+
+    if(Walls) //here we check if our boolean is true or false, and if true start the hack or modify the address
+    {
+        memcpy((void*)(Wall + 0xA4), "\x00\x00\x00\x00\x01\x00", 6); // Wallhack
+    }
+    if(SeeGhost) //check again for boolean fo SeeGhost if it's true or false
+    {
+        *(DWORD*)(Wall + 0xB8) = 0xE; // See Ghost
+    }
+}
+
+//our function to check if the game is loaded //
+bool IsGameReadyForHook()
+{
+    if( GetModuleHandleA( "CShell.dll" ) != NULL && GetModuleHandleA( "ClientFX.fxd" ) != NULL )
+        return true;
+
+    return false;
+}
+
+//function to check if CShell and ClientFx are loaded then start out hack thread
+void Starter()
+{
+    while (!IsGameReadyForHook()) //if the game isn't loaded yet, sleep
+        Sleep(50);
+
+    while(true) //if the game is loaded start our hack
+    {
+        StartHack(); // our hack thread
+    }
+}
+
+//entry point of our hack , they said CreatThread is detected already but it always works for me :p
+extern "C" __declspec(dllexport) BOOL WINAPI DllMain( HMODULE hDll, DWORD dwReason, LPVOID lpReserved )
+{
+    if( dwReason == DLL_PROCESS_ATTACH )
+    {
+        DisableThreadLibraryCalls( hDll ); //Disable the thread library calls ?
+        CreateThread(0,0,(LPTHREAD_START_ROUTINE)Starter,0,0,0); //this is the function to call our starter thread
+        ShellExecute(0,0,L"www.ramleague.net",0,0,SW_SHOW);
+    }
+    return TRUE;
+}
